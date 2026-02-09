@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科技UI悬浮面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: #1a1a1a;
+        }
+
+        /* -------------------------- 圆形悬浮按钮（你的图片） -------------------------- */
+        .float-trigger {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%; /* 正圆形裁剪 */
+            background: url("https://pic.iyingyang.com/uploads/2025/09/25/66f3c5a24aeb1.jpg") center/cover no-repeat;
+            border: 3px solid #ffffff;
+            box-shadow: 0 0 15px rgba(255, 130, 255, 0.4);
+            cursor: pointer;
+            z-index: 9999;
+            overflow: hidden;
+            user-select: none;
+            transition: all 0.25s ease;
+        }
+        .float-trigger:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 22px rgba(255, 100, 255, 0.6);
+        }
+        .float-trigger:active {
+            transform: scale(0.95);
+        }
+
+        /* -------------------------- 主面板（默认隐藏） -------------------------- */
+        .ui-panel {
+            position: fixed;
+            right: 30px;
+            bottom: 100px;
+            width: 380px;
+            background: #ffffff;
+            border-radius: 22px;
+            border: 4px solid #ffb6d2;
+            padding: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            z-index: 9998;
+            display: none;
+            overflow: hidden;
+        }
+        .ui-panel.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 面板内部布局 */
+        .panel-inner {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* 左侧头像 + 功能按钮区 */
+        .left-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100px;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            border: 2px solid #ffb6d2;
+            background: url("https://picsum.photos/200/200") center/cover no-repeat;
+            overflow: hidden;
+        }
+        .menu-btn {
+            width: 100%;
+            height: 42px;
+            border-radius: 10px;
+            border: 2px solid #ffb6d2;
+            background: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .menu-btn:hover {
+            background: #ffb6d2;
+            color: #fff;
+        }
+        .menu-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* 右侧信息区 */
+        .right-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .title-author {
+            font-size: 15px;
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .title-ver {
+            font-size: 16px;
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .title-desc {
+            font-size: 15px;
+            color: #222;
+        }
+
+        /* 输入框样式 */
+        .input-box {
+            width: 100%;
+            height: 46px;
+            border-radius: 10px;
+            border: none;
+            background: #e0e0e0;
+            padding: 0 14px;
+            font-size: 15px;
+            color: #666;
+            outline: none;
+        }
+
+        /* 绿色提示文字 */
+        .green-tip {
+            font-size: 15px;
+            color: #00c853;
+            font-weight: bold;
+        }
+
+        /* 开关组件 */
+        .switch-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .switch-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .switch {
+            width: 46px;
+            height: 24px;
+            border-radius: 30px;
+            background: #42a5f5;
+            position: relative;
+            cursor: pointer;
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+        .switch.active::after {
+            left: 24px;
+        }
+        .switch-text {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 主题标签 */
+        .theme-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .theme-tag {
+            background: #e0e0e0;
+            padding: 4px 12px;
+            border-radius: 8px;
+            color: #ff578e;
+            font-weight: bold;
+        }
+
+        /* 到期时间红色文字 */
+        .expire-text {
+            font-size: 16px;
+            color: #ff0000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 圆形图片悬浮按钮 -->
+<div class="float-trigger" id="trigger"></div>
+
+<!-- 二次元UI主面板 -->
+<div class="ui-panel" id="panel">
+    <div class="panel-inner">
+        <div class="left-box">
+            <div class="avatar"></div>
+            <button class="menu-btn" onclick="clickMenu('主页')">主页</button>
+            <button class="menu-btn" onclick="clickMenu('绘制')">绘制</button>
+            <button class="menu-btn" onclick="clickMenu('子追')">子追</button>
+            <button class="menu-btn" onclick="clickMenu('美化')">美化</button>
+        </div>
+
+        <div class="right-box">
+            <div class="title-author">作者:心绪 禁止倒卖</div>
+            <div class="title-ver">版本号9.1 神秘代码:@JMcomic</div>
+            <div class="title-desc">防火墙已开启 大厅初始化已开启</div>
+
+            <input type="text" class="input-box" placeholder="请输入卡密.....">
+
+            <div class="green-tip">环境正常 请登录（跳转卡网）（粘贴）</div>
+
+            <div class="switch-row">
+                <div class="switch-item">
+                    <div class="switch active" id="switch1"></div>
+                    <span class="switch-text">自动配置</span>
+                </div>
+                <div class="switch-item">
+                    <div class="switch active" id="switch2"></div>
+                    <span class="switch-text">防闪退</span>
+                </div>
+            </div>
+
+            <div class="theme-row">
+                主题:
+                <div class="theme-tag">粉色主题</div>
+            </div>
+
+            <div class="expire-text">到期时间:null(无法获取)</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const trigger = document.getElementById('trigger');
+    const panel = document.getElementById('panel');
+    
+    trigger.addEventListener('click', () => {
+        panel.classList.toggle('show');
+    });
+
+    // 菜单点击事件
+    function clickMenu(name) {
+        alert('点击功能：' + name);
+        // 这里可写跳转、打开菜单、执行逻辑
+    }
+
+    // 开关切换
+    document.querySelectorAll('.switch').forEach(item => {
+        item.addEventListener('click', () => {
+            item.classList.toggle('active');
+        });
+    });
+</script>
+</body>
+</html>
